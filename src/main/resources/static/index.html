@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<head>
+    <title>多人在线聊天室</title>
+</head>
+<body>
+<div>
+    <input type="text" id="sid" placeholder="请输入房间号"/><br>
+    <input type="text" id="nickname" placeholder="请输入昵称"/><br>
+    <input type="submit" value="连接" onclick="connect()" /><br>
+    <textarea rows="3" cols="20" id="content"></textarea><br>
+    <input type="submit" value="发送" onclick="start()" />
+    <br>
+</div>
+<div id="messages"></div>
+<script type="text/javascript">
+    //获取当前时间
+    function GetDate(format) {
+        /**
+         * format=1表示获取年月日
+         * format=0表示获取年月日时分秒
+         * **/
+        var now = new Date();
+        var year = now.getFullYear();
+        var month = now.getMonth()+1;
+        var date = now.getDate();
+        var day = now.getDay();//得到周几
+        var hour = now.getHours();//得到小时
+        var minu = now.getMinutes();//得到分钟
+        var sec = now.getSeconds();//得到秒
+        if (format=='yy:mm:dd'){
+            _time = year+"-"+month+"-"+date
+        }
+        else if (format=='y:m:d:h:m:s'){
+            _time = year+"-"+month+"-"+date+" "+hour+":"+minu+":"+sec
+        }
+        return _time
+    }
+
+    var webSocket = null;
+
+    function onMessage(event) {
+        document.getElementById('messages').innerHTML
+            += '<br />' + event.data +"&nbsp;&nbsp;&nbsp;&nbsp;"+ GetDate('y:m:d:h:m:s');
+    }
+
+    function onOpen(event) {
+        document.getElementById('messages').innerHTML
+            = '房间已连接 ^@^ ';
+    }
+
+    function onError(event) {
+        alert("发生错误");
+    }
+
+    function onClose(event) {
+        alert("连接关闭");
+    }
+
+    function connect() {
+        var sid = document.getElementById('sid').value;
+        var nickname = document.getElementById('nickname').value;
+        if (url == '' || nickname == '') {
+            alert("房间号和用户名不能为空");
+            return;
+        }
+        var serverHot =  window.location.host;
+        var url = 'ws://' + serverHot + '/groupChat/' + sid + '/' + nickname;
+        webSocket = new WebSocket(url);
+        webSocket.onerror = function(event) {
+            onError(event)
+        };
+
+        webSocket.onopen = function(event) {
+            onOpen(event)
+        };
+
+        webSocket.onmessage = function(event) {
+            onMessage(event)
+        };
+
+        webSocket.onclose = function(event) {
+            onClose(event)
+        };
+    }
+
+    function start() {
+        var text = document.getElementById('content').value;
+        webSocket.send(text);
+        document.getElementById('content').value = '';
+    }
+
+</script>
+</body>
+</html>
